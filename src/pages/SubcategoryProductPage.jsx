@@ -6,7 +6,7 @@ import BASE from "../config";
 import { useCart } from "../context/CartContext";
 import { useFilter } from "../context/FilterContext";
 import SidebarFilter from "../components/Filters/SidebarFilter";
-import fallbackImage from "../assets/Jars.png";
+import fallbackImage from "../assets/jars.png";
 import bannerimg from "../assets/cupsets.png";
 const GET_ALL_PRODUCTS = `${BASE.PRODUCT_BASE}/product-detail`;
 
