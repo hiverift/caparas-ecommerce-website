@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import BASE from "../config";
 import { useCart } from "../context/CartContext";
-import fallbackImage from "../assets/Jars.png";
+import fallbackImage from "../assets/jars.png";
 
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
