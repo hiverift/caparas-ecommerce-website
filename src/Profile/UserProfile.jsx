@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-
+import React, { useState,useEffect  } from "react";
+import BASE from "../config";
 export default function UserProfile() {
   const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
 
@@ -27,21 +27,110 @@ export default function UserProfile() {
     confirm: "",
   });
 
+  const updateProfileInfo = async () => {
+  if (!profile.name.trim()) {
+    alert("Full name required");
+    return;
+  }
+
+  if (!profile.phone.trim() || profile.phone.length !== 10) {
+    alert("Enter valid 10-digit phone number");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    const userEmail = localStorage.getItem("userEmail");
+
+    const payload = {
+      userName: profile.name,
+      userPhone: profile.phone,
+      userEmail: userEmail,
+    };
+
+    const res = await fetch(`${BASE.PRODUCT_BASE}/profile/update`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Update failed");
+      return;
+    }
+
+    // ⭐ Instant UI Update
+    setProfile({
+      name: payload.userName,
+      phone: payload.userPhone,
+    });
+
+    alert("Profile updated successfully!");
+
+  } catch (err) {
+    console.log(err);
+    alert("Server error");
+  }
+};
+
+useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) return;
+
+      const res = await fetch(`${BASE.PRODUCT_BASE}/profile`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log("Failed to load profile");
+        return;
+      }
+
+      const user = data.data || data.user || data;
+
+      setProfile({
+        name: user.userName || "",
+        phone: user.userPhone || "",
+      });
+
+    } catch (err) {
+      console.log("Profile fetch error:", err);
+    }
+  };
+
+  fetchProfile();
+}, []);
+
+
+
   return (
     <div className="min-h-screen  px-4 py-8 bg-[#f7f3ee]">
       <div className="max-w-5xl mx-auto">
-
         {/* PAGE TITLE */}
         <h1 className="text-3xl font-bold text-[#9c7d50]  mb-6">My Profile</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
           {/* LEFT MENU */}
           <div className="bg-[#f7f3ee] shadow p-5 rounded-xl h-fit">
-            <h2 className="text-xl font-semibold mb-4  text-[#9c7d50] ">Account</h2>
+            <h2 className="text-xl font-semibold mb-4  text-[#9c7d50] ">
+              Account
+            </h2>
 
             <ul className="space-y-3 text-gray-700">
-              {["info", "address", "orders", "wishlist", "security"].map((tab) => (
+              {["info", "address"].map((tab) => (
                 <li
                   key={tab}
                   className={`cursor-pointer  text-[#9c7d50] capitalize ${
@@ -75,11 +164,12 @@ export default function UserProfile() {
 
           {/* RIGHT SECTION */}
           <div className="md:col-span-2 space-y-6">
-
             {/* --- PERSONAL INFO FORM --- */}
             {activeTab === "info" && (
               <div className="bg-white shadow p-6 rounded-xl">
-                <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Personal Information
+                </h2>
 
                 <div className="space-y-4">
                   {/* Email */}
@@ -109,7 +199,9 @@ export default function UserProfile() {
 
                   {/* Phone */}
                   <div>
-                    <label className="block font-medium mb-1">Phone Number</label>
+                    <label className="block font-medium mb-1">
+                      Phone Number
+                    </label>
                     <input
                       type="number"
                       value={profile.phone}
@@ -120,8 +212,10 @@ export default function UserProfile() {
                       className="w-full p-3 rounded-lg border"
                     />
                   </div>
-
-                  <button className="bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 mt-3">
+                  <button
+                    onClick={updateProfileInfo}
+                    className="bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 mt-3"
+                  >
                     Save Changes
                   </button>
                 </div>
@@ -131,7 +225,9 @@ export default function UserProfile() {
             {/* --- ADDRESS FORM --- */}
             {activeTab === "address" && (
               <div className="bg-white shadow p-6 rounded-xl">
-                <h2 className="text-xl font-semibold mb-4">Add / Edit Address</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Add / Edit Address
+                </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
@@ -165,7 +261,7 @@ export default function UserProfile() {
             )}
 
             {/* --- ORDERS --- */}
-            {activeTab === "orders" && (
+            {/* {activeTab === "orders" && (
               <div className="bg-white shadow p-6 rounded-xl">
                 <h2 className="text-xl font-semibold mb-4">My Orders</h2>
 
@@ -175,15 +271,15 @@ export default function UserProfile() {
                   Start Shopping
                 </button>
               </div>
-            )}
+            )} */}
 
             {/* --- WISHLIST --- */}
-            {activeTab === "wishlist" && (
+            {/* {activeTab === "wishlist" && (
               <div className="bg-white shadow p-6 rounded-xl">
                 <h2 className="text-xl font-semibold mb-4">Wishlist</h2>
                 <p className="text-gray-600">Your wishlist is empty.</p>
               </div>
-            )}
+            )} */}
 
             {/* --- CHANGE PASSWORD --- */}
             {activeTab === "security" && (
@@ -216,7 +312,6 @@ export default function UserProfile() {
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>

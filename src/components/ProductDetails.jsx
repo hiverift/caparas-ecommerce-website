@@ -63,7 +63,7 @@ export default function ProductDetails() {
   const discountPercentage = Math.round(
     ((product.originalPrice - product.salePrice) / product.originalPrice) * 100
   );
- console.log("PRODUCT STOCK =>", product.Stock);
+  console.log("PRODUCT STOCK =>", product.Stock);
   return (
     <div className="max-w-6xl mx-auto px-5 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -131,12 +131,14 @@ export default function ProductDetails() {
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             {product.Stock < 2 ? (
               <p className="text-orange-800 font-semibold">
-                ⚠️ Hurry! Only <span className="text-red-600">{product.Stock}</span>{" "}
-                Left in Stock!
+                ⚠️ Hurry! Only{" "}
+                <span className="text-red-600">{product.Stock}</span> Left in
+                Stock!
               </p>
             ) : (
               <p className="text-green-800 font-semibold">
-                In Stock: <span className="text-green-600">{product.Stock}</span> items
+                In Stock:{" "}
+                <span className="text-green-600">{product.Stock}</span> items
                 available
               </p>
             )}
@@ -194,7 +196,7 @@ export default function ProductDetails() {
           </div>
 
           {/* Product Badges/Features */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+          {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
             {[
               "Premium Quality",
               "Microwave Safe",
@@ -211,7 +213,7 @@ export default function ProductDetails() {
                 {feature}
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 

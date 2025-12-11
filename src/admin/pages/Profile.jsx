@@ -19,10 +19,9 @@ export default function Profile() {
   const [preview, setPreview] = useState(null);
 
   const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    username: "",
+    userName: "",
+    userEmail: "",
+    userPhone: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -45,32 +44,47 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return (window.location.href = "/login");
+        const token = localStorage.getItem("adminToken");
 
+        // If no token → redirect to login
+        if (!token) {
+          window.location.href = "/admin/login";
+          return;
+        }
+
+        // API Call with Token
         const res = await fetch(`${BASE.PRODUCT_BASE}/profile`, {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ Token passed correctly
+          },
         });
 
         const data = await res.json();
+
         if (!res.ok) {
           Swal.fire("Error", data.message || "Failed to load profile", "error");
           return;
         }
 
+        // Different backend structures handled safely
         const user = data.data || data.user || data;
 
         setForm({
-          fullName: user.fullName || user.name || "",
-          email: user.userEmail || user.email,
-          phone: user.phone || "",
-          username: user.username || user.userEmail?.split("@")[0] || "",
+          userName: user.userName || user.username || "",
+          userEmail: user.userEmail || user.email || "",
+          userPhone: user.userPhone || "",
         });
 
-        if (user.profileImage) setPreview(user.profileImage);
-      } catch {
-        Swal.fire("Error", "Server Error! Please login again.", "error");
+        if (user.profileImage) {
+          setPreview(user.profileImage);
+        }
+      } catch (error) {
+        Swal.fire(
+          "Error",
+          "Unable to load profile. Please try again.",
+          "error"
+        );
       } finally {
         setLoading(false);
       }
@@ -84,11 +98,15 @@ export default function Profile() {
   // ================================
   const validate = () => {
     let newErr = {};
-    if (!form.fullName.trim()) newErr.fullName = "Full name required.";
-    if (!form.phone.trim()) newErr.phone = "Phone required.";
-    else if (!/^\d{10}$/.test(form.phone))
-      newErr.phone = "Phone must be 10 digits.";
-    if (!form.username.trim()) newErr.username = "Username required.";
+
+    if (!form.userName.trim()) newErr.userName = "User name required.";
+
+    if (!form.userPhone.trim()) newErr.userPhone = "Phone number required.";
+    else if (!/^\d{10}$/.test(form.userPhone))
+      newErr.userPhone = "Phone number must be 10 digits.";
+
+    if (!form.userEmail.trim()) newErr.userEmail = "Email required.";
+
     setErrors(newErr);
     return Object.keys(newErr).length === 0;
   };
@@ -100,7 +118,13 @@ export default function Profile() {
     if (!validate()) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("adminToken");
+      const payload = {
+        username: form.userName, // backend may expect this
+        userName: form.userName, // safe fallback
+        userPhone: form.userPhone,
+        userEmail: form.userEmail,
+      };
 
       const res = await fetch(`${BASE.PRODUCT_BASE}/profile/update`, {
         method: "PATCH",
@@ -108,11 +132,14 @@ export default function Profile() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!res.ok) return Swal.fire("Error", data.message, "error");
+
+      if (!res.ok) {
+        return Swal.fire("Error", data.message, "error");
+      }
 
       Swal.fire("Success", "Profile updated successfully!", "success");
     } catch {
@@ -132,7 +159,8 @@ export default function Profile() {
     setPreview(URL.createObjectURL(file));
 
     const formData = new FormData();
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("adminToken");
+
     formData.append("image", file);
 
     try {
@@ -175,7 +203,7 @@ export default function Profile() {
     if (!validatePassword()) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("adminToken");
 
       const res = await fetch(`${BASE.PRODUCT_BASE}/profile/change-password`, {
         method: "POST", // change if backend needs PUT
@@ -227,63 +255,57 @@ export default function Profile() {
           <User className="w-5 h-5" /> Basic Information
         </h2>
 
-        <div>
-          <label className="text-sm">Full Name</label>
-          <input
-            name="fullName"
-            value={form.fullName}
-            onChange={(e) => {
-              setForm({ ...form, fullName: e.target.value });
-              setErrors({ ...errors, fullName: "" });
-            }}
-            className="w-full border rounded-md p-2 mt-1"
-            placeholder="Your full name"
-          />
-          {errors.fullName && (
-            <p className="text-red-500 text-xs">{errors.fullName}</p>
-          )}
-        </div>
-
+        {/* EMAIL */}
         <div>
           <label className="text-sm">Email</label>
           <input
-            value={form.email}
-            readOnly
-            className="w-full border rounded-md p-2 mt-1 bg-gray-50"
+            name="userEmail"
+            value={form.userEmail}
+            onChange={(e) => {
+              setForm({ ...form, userEmail: e.target.value });
+              setErrors({ ...errors, userEmail: "" });
+            }}
+            className="w-full border rounded-md p-2 mt-1"
+            placeholder="your@email.com"
           />
+          {errors.userEmail && (
+            <p className="text-red-500 text-xs">{errors.userEmail}</p>
+          )}
         </div>
 
+        {/* PHONE */}
         <div>
-          <label className="text-sm">Phone</label>
+          <label className="text-sm">Phone Number</label>
           <input
-            name="phone"
-            value={form.phone}
+            name="userPhone"
+            value={form.userPhone}
             onChange={(e) => {
-              setForm({ ...form, phone: e.target.value });
-              setErrors({ ...errors, phone: "" });
+              setForm({ ...form, userPhone: e.target.value });
+              setErrors({ ...errors, userPhone: "" });
             }}
             className="w-full border rounded-md p-2 mt-1"
             placeholder="9876543210"
           />
-          {errors.phone && (
-            <p className="text-red-500 text-xs">{errors.phone}</p>
+          {errors.userPhone && (
+            <p className="text-red-500 text-xs">{errors.userPhone}</p>
           )}
         </div>
 
+        {/* USER NAME */}
         <div>
-          <label className="text-sm">Username</label>
+          <label className="text-sm">User Name</label>
           <input
-            name="username"
-            value={form.username}
+            name="userName"
+            value={form.userName}
             onChange={(e) => {
-              setForm({ ...form, username: e.target.value });
-              setErrors({ ...errors, username: "" });
+              setForm({ ...form, userName: e.target.value });
+              setErrors({ ...errors, userName: "" });
             }}
             className="w-full border rounded-md p-2 mt-1"
-            placeholder="yourusername"
+            placeholder="your username"
           />
-          {errors.username && (
-            <p className="text-red-500 text-xs">{errors.username}</p>
+          {errors.userName && (
+            <p className="text-red-500 text-xs">{errors.userName}</p>
           )}
         </div>
 

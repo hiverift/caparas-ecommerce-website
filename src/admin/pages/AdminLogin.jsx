@@ -23,50 +23,61 @@ export default function AdminLogin() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!form.email.trim() || !form.password.trim()) {
-      setToast({ type: "error", message: "Email & Password required" });
-      return;
-    }
+  if (!form.email.trim() || !form.password.trim()) {
+    setToast({ type: "error", message: "Email & Password required" });
+    return;
+  }
 
-    setLoading(true);
-    console.log("API URL:", `${BASE.PRODUCT_BASE}/auth/login`);
+  setLoading(true);
 
-    try {
-      const res = await fetch(`${BASE.PRODUCT_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userEmail: form.email,
-          userPassword: form.password,
-        }),
-      });
+  try {
+    const res = await fetch(`${BASE.PRODUCT_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userEmail: form.email,
+        userPassword: form.password,
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
+    // console.log("LOGIN RESPONSE:", data.statusCode === 200);
 
-      if (res.ok && data.statusCode === 200) {
-        localStorage.setItem("adminToken", data.data.access_token);
-        localStorage.setItem("adminRole", "admin");
-
-        setToast({ type: "success", message: "Admin Login Successful!" });
-
-        setTimeout(() => {
-          navigate("/admin/");
-        }, 1200);
-      } else {
+    if (data.statusCode === 200) {
+      const userRole = data.data.user.role;  // ✅ ROLE FOUND HERE
+      if (userRole !== "admin") {
         setToast({
           type: "error",
-          message: data.message || "Invalid credentials",
+          message: "Access denied: Admins only",
         });
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      setToast({ type: "error", message: "Server error" });
-    }
 
-    setLoading(false);
-  };
+      // ✅ SUCCESSFUL ADMIN LOGIN
+      localStorage.setItem("adminToken", data.data.access_token);
+      localStorage.setItem("adminRole", userRole);
+      localStorage.setItem("adminEmail", data.data.user.email);
+
+      setToast({ type: "success", message: "Admin Login Successful!" });
+
+      setTimeout(() => navigate("/admin/"), 1200);
+    } else {
+      setToast({
+        type: "error",
+        message: data.message || "Invalid credentials",
+      });
+    }
+  } catch (error) {
+    setToast({ type: "error", message: "Server error" });
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
@@ -119,17 +130,16 @@ export default function AdminLogin() {
             </button>
           </div>
 
-        <button
-  type="submit"
-  disabled={loading}
-  style={{ backgroundColor: "var(--color-teal-500)" }}
-  className={`w-full py-3 rounded-lg text-white font-semibold ${
-    loading ? "cursor-not-allowed" : "hover:opacity-90"
-  }`}
->
-  {loading ? "Logging in..." : "Login"}
-</button>
-
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ backgroundColor: "var(--color-teal-500)" }}
+            className={`w-full py-3 rounded-lg text-white font-semibold ${
+              loading ? "cursor-not-allowed" : "hover:opacity-90"
+            }`}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
       </div>
     </div>
